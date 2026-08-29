@@ -15,6 +15,7 @@ export const environment = {
   supabaseKey: 'TU_SUPABASE_ANON_KEY',
 };
 ```
+3. Coloca el nombre de tu gimnasio.
 3. (Opcional) Haz lo mismo para `environment.prod.ts` si planeas construir para producción.
 
 > **Nota:** Asegúrate de que las reglas RLS (Row Level Security) estén correctamente configuradas en tu dashboard de Supabase para proteger tus tablas.
