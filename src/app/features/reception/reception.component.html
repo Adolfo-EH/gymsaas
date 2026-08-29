@@ -1,0 +1,730 @@
+<!-- ============================================================ -->
+<!-- ReceptionPageComponent Template — Mobile-First Check-in      -->
+<!-- Flujo de Ventas Integrado (Pase Diario y Membresías)         -->
+<!-- ============================================================ -->
+
+<div class="flex min-h-screen flex-col bg-transparent">
+
+  <!-- ─── Tabs ──────────────────────────────────────────────── -->
+  <div class="flex justify-center border-b border-slate-800 bg-slate-900/50">
+    <div class="flex gap-8 px-6">
+      <button 
+        (click)="currentTab.set('access')"
+        [class.border-emerald-500]="currentTab() === 'access'"
+        [class.text-emerald-400]="currentTab() === 'access'"
+        [class.border-transparent]="currentTab() !== 'access'"
+        [class.text-slate-400]="currentTab() !== 'access'"
+        class="border-b-2 py-4 text-sm font-semibold transition-colors hover:text-emerald-300">
+        Control de Acceso
+      </button>
+      <button 
+        (click)="currentTab.set('store')"
+        [class.border-emerald-500]="currentTab() === 'store'"
+        [class.text-emerald-400]="currentTab() === 'store'"
+        [class.border-transparent]="currentTab() !== 'store'"
+        [class.text-slate-400]="currentTab() !== 'store'"
+        class="flex items-center gap-2 border-b-2 py-4 text-sm font-semibold transition-colors hover:text-emerald-300">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+        </svg>
+        Minimarket / Tienda
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: Control de Acceso                                       -->
+  <!-- ============================================================ -->
+  @if (currentTab() === 'access') {
+
+  <!-- ─── Estado: Idle / Buscando ────────────────────────────── -->
+  @if (state() === 'idle' || state() === 'searching') {
+  <div class="flex flex-1 flex-col items-center justify-center px-6">
+
+    <!-- Logo / Título -->
+    <div class="mb-10 text-center">
+      <div
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+        <svg class="text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white">Control de Acceso</h1>
+      <p class="mt-2 text-sm text-slate-400">Ingresa el DNI del cliente para verificar o cobrar</p>
+    </div>
+
+    <!-- Input Gigante de DNI -->
+    <div class="w-full max-w-sm">
+      <div class="relative">
+        <input type="text" inputmode="numeric" maxlength="8" [formControl]="dniControl" placeholder="DNI"
+          autocomplete="off"
+          class="w-full rounded-2xl border-2 border-slate-700 bg-slate-900 px-6 py-5 text-center text-5xl font-bold tracking-[0.15em] text-white placeholder:text-slate-600 transition-all duration-200 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/20" />
+
+        <!-- Indicador de dígitos -->
+        <div class="mt-4 flex items-center justify-center gap-1.5">
+          @for (i of [0,1,2,3,4,5,6,7]; track i) {
+          <div class="h-1.5 w-8 rounded-full transition-all duration-200" [ngClass]="{
+                  'bg-emerald-500': i < dniControl.value.length,
+                  'bg-slate-700': i >= dniControl.value.length
+                }"></div>
+          }
+        </div>
+      </div>
+
+      <!-- Spinner de búsqueda -->
+      @if (state() === 'searching') {
+      <div class="mt-8 flex items-center justify-center gap-3">
+        <svg class="h-5 w-5 animate-spin text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span class="text-sm font-medium text-slate-400">Verificando...</span>
+      </div>
+      }
+
+      <!-- Botón de Pase Diario (Visible solo cuando no está buscando) -->
+      @if (state() === 'idle') {
+      <div class="mt-8 flex justify-center">
+        <button type="button" (click)="openDailyPassModal()"
+          class="w-full rounded-2xl bg-slate-800 px-6 py-4 text-base font-semibold text-emerald-400 ring-1 ring-emerald-500/30 transition-all hover:bg-slate-700 active:scale-[0.98]">
+          Pase Diario (Venta Rápida)
+        </button>
+      </div>
+      }
+    </div>
+
+    <!-- Fecha y hora -->
+    <div class="mt-8 text-center">
+      <p class="text-xs font-medium uppercase tracking-widest text-slate-600">{{ getCurrentDate() }}</p>
+    </div>
+  </div>
+  }
+
+  <!-- ─── Estado: Activo (VERDE) ─────────────────── -->
+  @if (state() === 'found-active') {
+  <div
+    class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-emerald-600 to-emerald-800 px-6 transition-all duration-500">
+    <!-- Ícono de éxito -->
+    <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+      <svg class="h-14 w-14 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+
+    <!-- Datos del cliente -->
+    <h2 class="text-lg font-medium uppercase tracking-wider text-emerald-100">Acceso Autorizado</h2>
+    <p class="mt-3 text-center text-4xl font-extrabold text-white sm:text-5xl">
+      {{ foundClient()?.firstName }} {{ foundClient()?.lastName }}
+    </p>
+    <p class="mt-2 text-lg font-medium text-emerald-100/80">
+      DNI: {{ foundClient()?.dni }}
+    </p>
+
+    <!-- Info Membresía y Feedback -->
+    <div class="mt-8 w-full max-w-sm rounded-2xl bg-white/15 px-6 py-5 backdrop-blur-sm text-center">
+      @if (checkInTime()) {
+      <div
+        class="mb-4 flex flex-col items-center justify-center rounded-xl bg-emerald-900/30 py-3 shadow-inner ring-1 ring-emerald-500/20">
+        <span class="flex items-center gap-1.5 text-sm font-bold text-emerald-300">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+              clip-rule="evenodd" />
+          </svg>
+          ACCESO REGISTRADO
+        </span>
+        <span class="mt-1 text-2xl font-black tracking-tight text-white">{{ checkInTime() }}</span>
+      </div>
+      }
+
+      <p class="text-sm font-medium text-emerald-100/70">Plan: {{ foundClient()?.membershipPlanName }}</p>
+      <p class="mt-1 text-xl font-bold text-white">
+        Vence el: {{ foundClient()?.membershipEndDate | date:'dd/MM/yyyy' }}
+      </p>
+    </div>
+
+    <!-- Alerta de Deuda -->
+    @if (foundClient()?.membershipPaymentStatus === 'deuda') {
+    <div class="mt-6 w-full max-w-sm rounded-2xl bg-amber-500/20 px-5 py-4 border border-amber-500/50 backdrop-blur-sm text-center">
+      <div class="flex items-center justify-center gap-2 text-amber-300 font-bold mb-2">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+        </svg>
+        CLIENTE CON DEUDA
+      </div>
+      <div class="text-sm text-amber-100/90 space-y-1 mb-4">
+        <p>Deuda original: <span class="font-bold text-white">S/ {{ foundClient()?.membershipDebt }}</span></p>
+        @if (foundClient()?.membershipLateFee) {
+        <p>Mora por atraso: <span class="font-bold text-red-300">S/ {{ foundClient()?.membershipLateFee }}</span></p>
+        }
+        <p class="pt-2 mt-2 border-t border-amber-500/30 text-base">Total a pagar: <span class="font-black text-white">S/ {{ (foundClient()?.membershipDebt || 0) + (foundClient()?.membershipLateFee || 0) }}</span></p>
+      </div>
+      <button type="button" (click)="openDebtModal()"
+        class="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 transition-all hover:bg-amber-400 active:scale-[0.98] shadow-lg shadow-amber-900/50">
+        Saldar Deuda
+      </button>
+    </div>
+    }
+
+    <!-- Botón para nueva búsqueda -->
+    <button type="button" (click)="resetSearch()"
+      class="mt-10 rounded-2xl bg-white/20 px-8 py-3.5 text-sm font-semibold text-white ring-1 ring-white/30 transition-all hover:bg-white/30 active:scale-[0.98]">
+      Nueva consulta
+    </button>
+  </div>
+  }
+
+  <!-- ─── Estado: Vencido (ROJO) ───────────────────────── -->
+  @if (state() === 'found-expired') {
+  <div
+    class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-red-600 to-red-900 px-6 transition-all duration-500">
+    <!-- Ícono de alerta -->
+    <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+      <svg class="h-14 w-14 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+
+    <!-- Mensaje -->
+    <h2 class="text-lg font-medium uppercase tracking-wider text-red-100">Acceso Denegado</h2>
+    <p class="mt-3 text-center text-3xl font-extrabold text-white sm:text-4xl">
+      Membresía Vencida
+    </p>
+    <p class="mt-2 text-lg font-medium text-red-100/80">
+      {{ foundClient()?.firstName }} {{ foundClient()?.lastName }}
+    </p>
+
+    <!-- Subtexto -->
+    <div class="mt-8 w-full max-w-sm rounded-2xl bg-white/15 px-6 py-5 backdrop-blur-sm text-center">
+      <p class="text-sm font-medium text-red-100/70">La última membresía venció el:</p>
+      <p class="mt-1 text-2xl font-bold text-white">{{ foundClient()?.membershipEndDate | date:'dd/MM/yyyy' }}</p>
+    </div>
+
+    <!-- Alerta de Deuda -->
+    @if (foundClient()?.membershipPaymentStatus === 'deuda') {
+    <div class="mt-6 w-full max-w-sm rounded-2xl bg-amber-500/20 px-5 py-4 border border-amber-500/50 backdrop-blur-sm text-center">
+      <div class="flex items-center justify-center gap-2 text-amber-300 font-bold mb-2">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+        </svg>
+        CLIENTE CON DEUDA
+      </div>
+      <div class="text-sm text-amber-100/90 space-y-1 mb-4">
+        <p>Deuda original: <span class="font-bold text-white">S/ {{ foundClient()?.membershipDebt }}</span></p>
+        @if (foundClient()?.membershipLateFee) {
+        <p>Mora por atraso: <span class="font-bold text-red-300">S/ {{ foundClient()?.membershipLateFee }}</span></p>
+        }
+        <p class="pt-2 mt-2 border-t border-amber-500/30 text-base">Total a pagar: <span class="font-black text-white">S/ {{ (foundClient()?.membershipDebt || 0) + (foundClient()?.membershipLateFee || 0) }}</span></p>
+      </div>
+      <button type="button" (click)="openDebtModal()"
+        class="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 transition-all hover:bg-amber-400 active:scale-[0.98] shadow-lg shadow-amber-900/50">
+        Saldar Deuda
+      </button>
+    </div>
+    }
+
+    <div class="mt-8 flex flex-col gap-4 w-full max-w-sm">
+      <button type="button" (click)="openMembershipModal()"
+        class="w-full rounded-2xl bg-white px-8 py-4 text-base font-bold text-red-700 shadow-lg transition-all hover:bg-gray-100 active:scale-[0.98]">
+        Renovar Membresía
+      </button>
+      <button type="button" (click)="resetSearch()"
+        class="w-full rounded-2xl bg-white/20 px-8 py-3 text-sm font-semibold text-white ring-1 ring-white/30 transition-all hover:bg-white/30 active:scale-[0.98]">
+        Cancelar
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- ─── Estado: Por Iniciar (AZUL) ───────────────────────── -->
+  @if (state() === 'found-future') {
+  <div
+    class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-sky-600 to-sky-900 px-6 transition-all duration-500">
+    <!-- Ícono de calendario -->
+    <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/30">
+      <svg class="h-14 w-14 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+      </svg>
+    </div>
+
+    <!-- Mensaje -->
+    <h2 class="text-lg font-medium uppercase tracking-wider text-sky-100">Acceso Temprano</h2>
+    <p class="mt-3 text-center text-3xl font-extrabold text-white sm:text-4xl">
+      Membresía Por Iniciar
+    </p>
+    <p class="mt-2 text-lg font-medium text-sky-100/80">
+      {{ foundClient()?.firstName }} {{ foundClient()?.lastName }}
+    </p>
+
+    <!-- Subtexto -->
+    <div class="mt-8 w-full max-w-sm rounded-2xl bg-white/15 px-6 py-5 backdrop-blur-sm text-center">
+      <p class="text-sm font-medium text-sky-100/70">La membresía inicia el:</p>
+      <p class="mt-1 text-2xl font-bold text-white">{{ foundClient()?.membershipStartDate | date:'dd/MM/yyyy' }}</p>
+    </div>
+
+    <!-- Alerta de Deuda -->
+    @if (foundClient()?.membershipPaymentStatus === 'deuda') {
+    <div class="mt-6 w-full max-w-sm rounded-2xl bg-amber-500/20 px-5 py-4 border border-amber-500/50 backdrop-blur-sm text-center">
+      <div class="flex items-center justify-center gap-2 text-amber-300 font-bold mb-2">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+        </svg>
+        CLIENTE CON DEUDA
+      </div>
+      <div class="text-sm text-amber-100/90 space-y-1 mb-4">
+        <p>Deuda original: <span class="font-bold text-white">S/ {{ foundClient()?.membershipDebt }}</span></p>
+        @if (foundClient()?.membershipLateFee) {
+        <p>Mora por atraso: <span class="font-bold text-red-300">S/ {{ foundClient()?.membershipLateFee }}</span></p>
+        }
+        <p class="pt-2 mt-2 border-t border-amber-500/30 text-base">Total a pagar: <span class="font-black text-white">S/ {{ (foundClient()?.membershipDebt || 0) + (foundClient()?.membershipLateFee || 0) }}</span></p>
+      </div>
+      <button type="button" (click)="openDebtModal()"
+        class="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-amber-950 transition-all hover:bg-amber-400 active:scale-[0.98] shadow-lg shadow-amber-900/50">
+        Saldar Deuda
+      </button>
+    </div>
+    }
+
+    <div class="mt-8 flex flex-col gap-4 w-full max-w-sm">
+      <button type="button" (click)="resetSearch()"
+        class="w-full rounded-2xl bg-white/20 px-8 py-4 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 transition-all hover:bg-white/30 active:scale-[0.98]">
+        Volver
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- ─── Estado: No Encontrado (GRIS) ───────────────────────── -->
+  @if (state() === 'not-found') {
+  <div class="flex flex-1 flex-col items-center justify-center bg-slate-900 px-6 transition-all duration-500">
+    <!-- Ícono de persona con signo interrogación -->
+    <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-800 ring-4 ring-slate-700">
+      <svg class="h-14 w-14 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01" />
+      </svg>
+    </div>
+
+    <h2 class="text-lg font-medium uppercase tracking-wider text-slate-400">Cliente Nuevo</h2>
+    <p class="mt-3 text-center text-3xl font-extrabold text-white sm:text-4xl">
+      DNI No Registrado
+    </p>
+    <p class="mt-2 text-lg font-medium text-emerald-400">
+      DNI: {{ dniControl.value }}
+    </p>
+
+    <div class="mt-10 flex flex-col gap-4 w-full max-w-sm">
+      <button type="button" (click)="openMembershipModal()"
+        class="w-full rounded-2xl bg-emerald-600 px-8 py-4 text-base font-bold text-white shadow-lg shadow-emerald-900/50 transition-all hover:bg-emerald-500 active:scale-[0.98]">
+        Registrar y Cobrar
+      </button>
+      <button type="button" (click)="resetSearch()"
+        class="w-full rounded-2xl bg-slate-800 px-8 py-3 text-sm font-semibold text-slate-300 ring-1 ring-slate-700 transition-all hover:bg-slate-700 active:scale-[0.98]">
+        Cancelar
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- End TAB: Control de Acceso -->
+  }
+
+  <!-- ============================================================ -->
+  <!-- TAB: Minimarket / Tienda                                     -->
+  <!-- ============================================================ -->
+  @if (currentTab() === 'store') {
+  <div class="flex flex-1 flex-col lg:flex-row bg-transparent min-h-0">
+    
+    <!-- Left Column: Catalog -->
+    <div class="flex-1 p-6 overflow-y-auto">
+      <h2 class="text-xl font-bold text-white mb-6">Productos Disponibles</h2>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        @for (product of storeProducts(); track product.id) {
+        <button type="button" 
+          (click)="addToCart(product)"
+          [disabled]="product.stock <= 0"
+          class="relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 bg-slate-900 shadow-sm transition-all text-center
+            {{ product.stock > 0 ? 'border-slate-800 hover:border-emerald-500 hover:shadow-md cursor-pointer hover:-translate-y-1' : 'border-slate-800 opacity-60 cursor-not-allowed' }}">
+          
+          <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-slate-400">
+            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+            </svg>
+          </div>
+          
+          <h3 class="font-bold text-slate-100 leading-tight mb-1">{{ product.name }}</h3>
+          <p class="text-emerald-600 font-black mb-2">S/ {{ product.price | number:'1.2-2' }}</p>
+          
+          @if (product.stock > 0) {
+            <span class="text-xs font-medium px-2.5 py-1 rounded-lg"
+              [ngClass]="product.stock < 5 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-700'">
+              Stock: {{ product.stock }}
+            </span>
+          } @else {
+            <span class="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">Agotado</span>
+          }
+        </button>
+        }
+        
+        @if (storeProducts().length === 0) {
+        <div class="col-span-full py-12 text-center text-slate-400">
+          <p>No hay productos en el inventario.</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right Column: Cart -->
+    <div class="w-full lg:w-96 bg-slate-900 border-l border-slate-800 shadow-xl flex flex-col h-[calc(100vh-73px)]">
+      <div class="p-6 border-b border-slate-800 bg-slate-900/50">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <svg class="h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+          Carrito de Compras
+        </h2>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+        @for (item of cart(); track item.product.id) {
+        <div class="flex items-center gap-4 bg-slate-800 p-3 rounded-xl border border-slate-700 shadow-sm">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-slate-100 truncate">{{ item.product.name }}</p>
+            <p class="text-sm font-medium text-emerald-600">S/ {{ item.product.price | number:'1.2-2' }}</p>
+          </div>
+          
+          <div class="flex items-center gap-2 bg-slate-900 rounded-lg p-1">
+            <button type="button" (click)="updateCartQuantity(item.product.id, -1)" class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 shadow-sm text-slate-300 hover:text-red-400 transition-colors">-</button>
+            <span class="w-6 text-center text-sm font-bold text-white">{{ item.quantity }}</span>
+            <button type="button" (click)="updateCartQuantity(item.product.id, 1)" 
+              [disabled]="item.quantity >= item.product.stock"
+              class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-800 shadow-sm text-slate-300 hover:text-emerald-400 disabled:opacity-50 transition-colors">+</button>
+          </div>
+
+          <button type="button" (click)="removeFromCart(item.product.id)" class="p-2 text-slate-500 hover:text-red-400 transition-colors">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
+        </div>
+        }
+
+        @if (cart().length === 0) {
+        <div class="h-full flex flex-col items-center justify-center text-slate-500 py-12">
+          <svg class="h-16 w-16 mb-4 opacity-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+          <p class="font-medium">El carrito está vacío</p>
+        </div>
+        }
+      </div>
+
+      <div class="p-6 bg-slate-900 border-t border-slate-800">
+        <div class="flex justify-between items-center mb-4">
+          <span class="text-slate-400 font-medium">Total a Pagar</span>
+          <span class="text-2xl font-black text-white">S/ {{ cartTotal() | number:'1.2-2' }}</span>
+        </div>
+        
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-slate-400">Método de Pago</label>
+          <select [formControl]="storePaymentMethod"
+            class="w-full rounded-xl border border-slate-700 px-4 py-3 bg-slate-800 text-white font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+            <option value="efectivo">Efectivo</option>
+            <option value="yape">Yape / Plin</option>
+          </select>
+        </div>
+
+        <button type="button" 
+          (click)="submitStoreSale()"
+          [disabled]="cart().length === 0 || loadingSales()"
+          class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]">
+          @if (loadingSales()) {
+            Procesando...
+          } @else {
+            Cobrar Venta
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+</div>
+
+<!-- ─── Modal: Venta de Membresía ─────────────────────── -->
+@if (showMembershipModal()) {
+<app-modal [title]="foundClient() ? 'Renovar Membresía' : 'Nueva Membresía'" (closed)="closeMembershipModal()">
+
+  <form [formGroup]="membershipForm" (ngSubmit)="submitMembershipSale()" class="space-y-5">
+
+    <!-- Info DNI -->
+    <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-center">
+      <p class="text-sm font-medium text-emerald-800">DNI: <span class="font-bold">{{ dniControl.value }}</span></p>
+    </div>
+
+    <!-- Si NO existe, pedir nombres -->
+    @if (!foundClient()) {
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Nombres</label>
+        <input type="text" formControlName="firstName"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Apellidos</label>
+        <input type="text" formControlName="lastName"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+    </div>
+
+    <!-- Teléfono (Opcional) -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-gray-700">Celular (Opcional)</label>
+      <input type="text" inputmode="numeric" maxlength="9" formControlName="phone"
+        class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+        placeholder="Ej. 987654321" />
+      @if (hasMembershipError('phone')) {
+      <p class="mt-1.5 text-xs text-red-500">El celular debe tener 9 dígitos numéricos</p>
+      }
+    </div>
+    }
+
+    <!-- Selector de Plan -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-gray-700">Plan a adquirir</label>
+      <select formControlName="planId" (change)="onPlanChange($event)"
+        class="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+        <option value="" disabled>Selecciona un plan...</option>
+        @for (plan of plans(); track plan.id) {
+        <option [value]="plan.id">{{ plan.name }} - S/ {{ plan.price }} ({{ plan.durationDays }} días)</option>
+        }
+      </select>
+    </div>
+
+    <!-- Precio Personalizado / Oferta -->
+    @if (membershipForm.get('planId')?.value) {
+    <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" formControlName="isCustomPrice"
+          class="h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500">
+        <span class="text-sm font-medium text-amber-800">Aplicar precio especial u oferta</span>
+      </label>
+
+      @if (membershipForm.get('isCustomPrice')?.value) {
+      <div class="mt-3">
+        <label class="mb-1.5 block text-xs font-medium text-amber-700">Nuevo Precio (S/)</label>
+        <input type="number" formControlName="customPrice" min="0" step="0.5"
+          class="w-full rounded-xl border border-amber-300 px-4 py-2.5 text-gray-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Fechas de la Membresía -->
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+        <input type="date" formControlName="startDate"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Fecha de Vencimiento</label>
+        <input type="date" [value]="getEndDate()" readonly disabled
+          class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-500 font-medium cursor-not-allowed" />
+      </div>
+    </div>
+
+    <!-- Monto e Insumo -->
+    <div class="grid grid-cols-2 gap-4">
+      @if (membershipForm.get('paymentMethod')?.value !== 'dividido') {
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Cobrado (S/)</label>
+        <input type="number" formControlName="amountPaid"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      }
+      <div [ngClass]="{'col-span-2': membershipForm.get('paymentMethod')?.value === 'dividido'}">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Método de Pago</label>
+        <select formControlName="paymentMethod"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+          <option value="efectivo">Efectivo</option>
+          <option value="yape">Yape/Plin</option>
+          <option value="dividido">Dividido</option>
+        </select>
+      </div>
+    </div>
+
+    @if (membershipForm.get('paymentMethod')?.value === 'dividido') {
+    <div class="grid grid-cols-2 gap-4 rounded-xl bg-gray-50 p-4 border border-gray-200 mt-2">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Efectivo (S/)</label>
+        <input type="number" formControlName="amountPaidCash"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Digital (S/)</label>
+        <input type="number" formControlName="amountPaidDigital"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+    </div>
+    }
+
+    <!-- Deuda Restante y Fecha de Pago -->
+    @if (getRemainingDebt() > 0) {
+    <div class="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
+      <div class="flex items-center gap-2 text-sm font-medium text-orange-800 mb-3">
+        <span>⚠️</span> Deuda restante: S/ {{ getRemainingDebt() }}
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-orange-900">Día de compromiso de pago <span
+            class="text-red-500">*</span></label>
+        <input type="date" formControlName="debtDueDate" [min]="getTodayString()"
+          class="w-full rounded-xl border border-orange-300 px-4 py-2.5 text-gray-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+        @if (membershipForm.get('debtDueDate')?.invalid && membershipForm.get('debtDueDate')?.touched) {
+        <p class="mt-1.5 text-xs text-red-500">Debe indicar la fecha límite de pago.</p>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Notas (opcional) -->
+    <div class="mt-4">
+      <label class="mb-1.5 block text-sm font-medium text-gray-700">Notas (Opcional)</label>
+      <textarea formControlName="notes" rows="2"
+        class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+        placeholder="Ej. Dejó a cuenta, paga el resto el viernes"></textarea>
+    </div>
+
+    <!-- Registro de Asistencia Opcional -->
+    <div class="mt-4 flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+      <input type="checkbox" formControlName="checkInNow" id="checkInNow"
+        class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+      <label for="checkInNow" class="text-sm font-medium text-emerald-800 cursor-pointer">
+        Registrar asistencia para hoy automáticamente (solo si el cliente ingresará ahora)
+      </label>
+    </div>
+  </form>
+
+  <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <button type="button" (click)="closeMembershipModal()"
+      class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">
+      Cancelar
+    </button>
+    <button type="button" (click)="submitMembershipSale()"
+      [disabled]="loadingSales() || membershipForm.invalid || !isMembershipDividedValid()"
+      class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50">
+      Confirmar Venta
+    </button>
+  </div>
+</app-modal>
+}
+
+<!-- ─── Modal: Pase Diario ─────────────────────── -->
+@if (showDailyPassModal()) {
+<app-modal title="Vender Pase Diario" (closed)="closeDailyPassModal()">
+  <form [formGroup]="dailyPassForm" (ngSubmit)="submitDailyPass()" class="space-y-5">
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Cantidad</label>
+        <input type="number" formControlName="quantity" min="1"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+
+      @if (dailyPassForm.get('paymentMethod')?.value !== 'dividido') {
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Cobrado (S/)</label>
+        <input type="number" formControlName="amount"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      }
+      <div [ngClass]="{'col-span-2': dailyPassForm.get('paymentMethod')?.value !== 'dividido'}">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Método de Pago</label>
+        <select formControlName="paymentMethod"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+          <option value="efectivo">Efectivo</option>
+          <option value="yape">Yape/Plin</option>
+          <option value="dividido">Dividido</option>
+        </select>
+      </div>
+    </div>
+
+    @if (dailyPassForm.get('paymentMethod')?.value === 'dividido') {
+    <div class="grid grid-cols-2 gap-4 rounded-xl bg-gray-50 p-4 border border-gray-200 mt-2">
+      <div class="col-span-2">
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Total (S/)</label>
+        <input type="number" formControlName="amount"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Efectivo (S/)</label>
+        <input type="number" formControlName="amountPaidCash"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Digital (S/)</label>
+        <input type="number" formControlName="amountPaidDigital"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+      </div>
+    </div>
+    }
+  </form>
+
+  <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <button type="button" (click)="closeDailyPassModal()"
+      class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">
+      Cancelar
+    </button>
+    <button type="button" (click)="submitDailyPass()"
+      [disabled]="loadingSales() || dailyPassForm.invalid || !isDailyPassDividedValid()"
+      class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+      Confirmar Pase Diario
+    </button>
+  </div>
+</app-modal>
+}
+
+@if (showDebtModal()) {
+<app-modal title="Saldar Deuda" (closed)="closeDebtModal()">
+  <form [formGroup]="debtForm" (ngSubmit)="submitDebtPayment()" class="p-6">
+    <div class="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-center">
+      <p class="text-sm font-medium text-amber-800">Total a Pagar (Base + Mora):</p>
+      <p class="text-3xl font-black text-amber-600 mt-1">S/ {{ (foundClient()?.membershipDebt || 0) + (foundClient()?.membershipLateFee || 0) }}</p>
+    </div>
+
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-gray-700">Método de Pago</label>
+      <select formControlName="paymentMethod"
+        class="w-full rounded-xl border border-gray-300 px-4 py-3 bg-white text-gray-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+        <option value="efectivo">Efectivo</option>
+        <option value="yape">Yape/Plin</option>
+      </select>
+    </div>
+  </form>
+
+  <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <button type="button" (click)="closeDebtModal()"
+      class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">
+      Cancelar
+    </button>
+    <button type="button" (click)="submitDebtPayment()"
+      [disabled]="loadingSales() || debtForm.invalid"
+      class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-amber-950 hover:bg-amber-400 disabled:opacity-50">
+      Confirmar Pago
+    </button>
+  </div>
+</app-modal>
+}

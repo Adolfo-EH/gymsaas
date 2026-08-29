@@ -1,0 +1,62 @@
+<div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex flex-col justify-center items-center px-4">
+  <div class="max-w-md w-full bg-slate-900 rounded-3xl p-8 border border-slate-800 shadow-2xl">
+    <!-- Brand / Logo -->
+    <div class="flex flex-col items-center gap-4 mb-8">
+      <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-500/20 shadow-sm">
+        <svg class="h-8 w-8 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        </svg>
+      </div>
+      <h2 class="text-3xl font-bold text-white tracking-tight">Turky's Gym</h2>
+      <p class="text-sm text-slate-400">Ingresa a tu cuenta para continuar</p>
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <div class="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+        <p class="text-sm font-medium text-red-500">{{ errorMessage() }}</p>
+      </div>
+    }
+
+    <!-- Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">Correo Electrónico</label>
+        <input 
+          id="email"
+          type="email" 
+          formControlName="email"
+          class="w-full rounded-xl border border-slate-700 bg-transparent px-4 py-3 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+          placeholder="admin@gym.com"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-slate-300 mb-1.5">Contraseña</label>
+        <input 
+          id="password"
+          type="password" 
+          formControlName="password"
+          class="w-full rounded-xl border border-slate-700 bg-transparent px-4 py-3 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <button 
+        type="submit" 
+        [disabled]="loginForm.invalid || isLoading()"
+        class="w-full mt-2 rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-bold text-white hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-emerald-900/50"
+      >
+        @if (isLoading()) {
+          <svg class="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Iniciando sesión...
+        } @else {
+          Iniciar Sesión
+        }
+      </button>
+    </form>
+  </div>
+</div>

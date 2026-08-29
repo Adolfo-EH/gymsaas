@@ -1,0 +1,149 @@
+<!-- ============================================================ -->
+<!-- CashRegisterPageComponent Template                           -->
+<!-- Módulo de Gestión de Caja                                    -->
+<!-- ============================================================ -->
+
+<main class="min-h-screen bg-transparent px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-6">
+    
+    <!-- ─── Page Header ──────────────────────────────────────── -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Gestión de Caja</h1>
+        <p class="mt-1 text-sm text-slate-400">Control de apertura, cierre y auditoría de transacciones del turno</p>
+      </div>
+    </div>
+
+    <!-- ─── Error Alert ──────────────────────────────────────── -->
+    <div *ngIf="error()" class="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+      <svg class="h-5 w-5 shrink-0 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+      </svg>
+      <p class="text-sm text-red-300">{{ error() }}</p>
+    </div>
+
+    <!-- ─── ESTADO: CAJA CERRADA ─────────────────────────────── -->
+    <div *ngIf="!loading() && !isRegisterOpen()" class="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+      <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-slate-800 ring-4 ring-slate-800/50">
+        <svg class="h-12 w-12 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+      </div>
+      
+      <h2 class="text-xl font-bold text-white mb-2">Caja Cerrada</h2>
+      <p class="text-slate-400 max-w-sm mb-8">El turno de caja actual se encuentra cerrado. Para poder registrar ventas y cobrar en la recepción, primero debes abrir el turno de caja.</p>
+      
+      <form [formGroup]="openForm" (ngSubmit)="openShift()" class="w-full max-w-xs space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1.5 text-left">Fondo de Caja / Base (S/)</label>
+          <input type="number" formControlName="openingBalance" min="0" step="0.5"
+            class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-lg font-semibold text-white focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
+          <p *ngIf="openForm.get('openingBalance')?.invalid && openForm.get('openingBalance')?.touched" class="mt-1 text-left text-xs text-red-400">Ingresa un monto base válido (ej. 0).</p>
+        </div>
+        
+        <button type="submit" [disabled]="loading()"
+          class="w-full rounded-xl bg-emerald-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-900/50 transition-all hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-50">
+          <span class="flex items-center justify-center gap-2">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            Abrir Turno
+          </span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ─── ESTADO: CAJA ABIERTA ─────────────────────────────── -->
+    <div *ngIf="!loading() && isRegisterOpen()" class="space-y-6">
+      
+      <!-- Panel de KPIs -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <!-- Tarjeta: Base -->
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-sm font-medium text-slate-400">Fondo Inicial (Base)</p>
+          <p class="mt-1 text-2xl font-bold text-white">S/ {{ activeRegister()?.openingBalance | number:'1.2-2' }}</p>
+        </div>
+
+        <!-- Tarjeta: Ingresos Efectivo -->
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-sm font-medium text-slate-400">Ingresos en Efectivo</p>
+          <p class="mt-1 text-2xl font-bold text-white">S/ {{ cashIncome() | number:'1.2-2' }}</p>
+        </div>
+
+        <!-- Tarjeta: Ingresos Digitales -->
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-sm font-medium text-slate-400">Ingresos Digitales (Yape/Plin)</p>
+          <p class="mt-1 text-2xl font-bold text-emerald-400">S/ {{ digitalIncome() | number:'1.2-2' }}</p>
+        </div>
+
+        <!-- Tarjeta: Total Esperado (Turno Completo) -->
+        <div class="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-blue-500/5 p-5 relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-10">
+            <svg class="h-24 w-24 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-sm font-medium text-blue-200">Total del Turno</p>
+          <p class="mt-1 text-3xl font-black text-blue-400">S/ {{ shiftTotal() | number:'1.2-2' }}</p>
+          <p class="mt-2 text-xs text-blue-200/70">Base + Efectivo + Digital</p>
+        </div>
+      </div>
+
+      <!-- Sección Transacciones -->
+      <div class="space-y-4">
+        <!-- Header Transacciones y Cierre -->
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
+          <h2 class="text-xl font-bold text-white">Transacciones del Turno</h2>
+          <button type="button" (click)="promptCloseShift()"
+            class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-900/50 transition-all hover:bg-red-500 active:scale-[0.98]">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            Cerrar Turno
+          </button>
+        </div>
+
+        <!-- Tabla de Transacciones -->
+        <app-data-table
+          [columns]="columns"
+          [data]="transactions()"
+          [loading]="false"
+          emptyMessage="No hay transacciones registradas en este turno."
+        />
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ─── Modal: Cerrar Turno ─────────────────────── -->
+<app-modal *ngIf="showCloseModal()" title="Cerrar Turno de Caja" (closed)="showCloseModal.set(false)">
+  <div class="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-center">
+    <p class="text-sm font-medium text-blue-800">Total esperado según sistema:</p>
+    <p class="text-2xl font-black text-blue-900">S/ {{ expectedTotal() | number:'1.2-2' }}</p>
+  </div>
+
+  <form [formGroup]="closeForm" (ngSubmit)="confirmCloseShift()" class="space-y-5">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-gray-700">
+        Ingrese únicamente el EFECTIVO FÍSICO (Billetes y monedas) que hay en caja. <br>
+        <span class="text-xs text-gray-500 font-normal">El dinero digital (Yape/Plin) ya está asegurado en la cuenta bancaria.</span> <span class="text-red-500">*</span>
+      </label>
+      <input type="number" formControlName="actualBalance" step="0.10"
+        class="w-full rounded-xl border border-gray-300 px-4 py-3 text-lg font-semibold text-gray-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 mt-2"
+        placeholder="Ej. {{ expectedTotal() }}" />
+      <p *ngIf="closeForm.get('actualBalance')?.invalid && closeForm.get('actualBalance')?.touched" class="mt-1.5 text-xs text-red-500">Debe ingresar el monto físico real para hacer el arqueo.</p>
+    </div>
+
+    <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+      <button type="button" (click)="showCloseModal.set(false)"
+        class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100">
+        Cancelar
+      </button>
+      <button type="submit" [disabled]="loading() || closeForm.invalid"
+        class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-50">
+        Confirmar y Cerrar
+      </button>
+    </div>
+  </form>
+</app-modal>

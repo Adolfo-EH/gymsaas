@@ -1,0 +1,145 @@
+<!-- ============================================================ -->
+<!-- ClientsPageComponent Template                                -->
+<!-- Directorio de clientes (solo lectura + edición de datos)     -->
+<!-- Sin botón de crear. La creación ocurre en el flujo de ventas -->
+<!-- ============================================================ -->
+
+<main class="min-h-screen bg-transparent px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <div class="space-y-6">
+
+  <!-- ─── Page Header ──────────────────────────────────────── -->
+  <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-white">Directorio de Clientes</h1>
+      <p class="mt-1 text-sm text-slate-400">Consulta el registro de clientes y el estado de sus membresías</p>
+    </div>
+    <div class="relative w-full sm:max-w-xs">
+      <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+        <svg class="h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </div>
+      <input
+        type="text"
+        placeholder="Buscar por nombre o DNI..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        class="block w-full rounded-xl border-0 bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-white shadow-sm ring-1 ring-inset ring-slate-700 placeholder:text-slate-500 focus:bg-slate-800 focus:ring-2 focus:ring-inset focus:ring-emerald-500"
+      />
+    </div>
+  </div>
+
+  <!-- ─── Error Alert ──────────────────────────────────────── -->
+  <div *ngIf="error()" class="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+    <svg class="h-5 w-5 shrink-0 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+    </svg>
+    <p class="text-sm text-red-300">{{ error() }}</p>
+  </div>
+
+  <!-- ─── Data Table ───────────────────────────────────────── -->
+  <app-data-table
+    [columns]="columns"
+    [data]="filteredClients()"
+    [loading]="loading()"
+    [actions]="tableActions"
+    emptyMessage="No hay clientes registrados aún."
+    (rowAction)="handleRowAction($event)"
+  />
+    </div>
+  </div>
+</main>
+
+<!-- ─── Modal: Editar datos básicos del cliente ───────────────── -->
+<app-modal *ngIf="showEditModal()" title="Editar Cliente" (closed)="closeEditModal()">
+
+    <form [formGroup]="clientForm" (ngSubmit)="saveClient()" class="space-y-5">
+
+      <!-- Campo: DNI (solo lectura) -->
+      <div>
+        <label class="mb-1.5 block text-sm font-medium text-gray-700">DNI</label>
+        <p class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-500">
+          {{ editingClient()?.dni }}
+        </p>
+      </div>
+
+      <!-- Campo: Nombres -->
+      <div>
+        <label for="client-firstName" class="mb-1.5 block text-sm font-medium text-gray-700">
+          Nombres
+        </label>
+        <input
+          id="client-firstName"
+          type="text"
+          formControlName="firstName"
+          placeholder="Ej: Juan Carlos"
+          class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2"
+          [ngClass]="{
+            'border-red-400 text-red-900 focus:border-red-500 focus:ring-red-500/20': hasError('firstName'),
+            'border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-emerald-500/20': !hasError('firstName')
+          }"
+        />
+        <p *ngIf="hasError('firstName')" class="mt-1.5 text-xs text-red-500">Los nombres son obligatorios (mín. 2 caracteres)</p>
+      </div>
+
+      <!-- Campo: Apellidos -->
+      <div>
+        <label for="client-lastName" class="mb-1.5 block text-sm font-medium text-gray-700">
+          Apellidos
+        </label>
+        <input
+          id="client-lastName"
+          type="text"
+          formControlName="lastName"
+          placeholder="Ej: Pérez García"
+          class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2"
+          [ngClass]="{
+            'border-red-400 text-red-900 focus:border-red-500 focus:ring-red-500/20': hasError('lastName'),
+            'border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-emerald-500/20': !hasError('lastName')
+          }"
+        />
+        <p *ngIf="hasError('lastName')" class="mt-1.5 text-xs text-red-500">Los apellidos son obligatorios (mín. 2 caracteres)</p>
+      </div>
+
+      <!-- Campo: Teléfono (Opcional) -->
+      <div>
+        <label for="client-phone" class="mb-1.5 block text-sm font-medium text-gray-700">
+          Teléfono <span class="text-gray-400">(opcional)</span>
+        </label>
+        <input
+          id="client-phone"
+          type="tel"
+          formControlName="phone"
+          placeholder="Ej: 987654321"
+          maxlength="15"
+          class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+        />
+      </div>
+
+    </form>
+
+    <!-- Footer del Modal -->
+    <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+      <button
+        type="button"
+        (click)="closeEditModal()"
+        class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="saveClient()"
+        [disabled]="loading()"
+        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <svg *ngIf="loading()" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Guardar cambios
+      </button>
+    </div>
+
+</app-modal>

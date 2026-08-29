@@ -1,0 +1,44 @@
+<!-- ============================================================ -->
+<!-- ModalComponent Template                                      -->
+<!-- Overlay con backdrop blur + panel centrado. El padre          -->
+<!-- controla la renderización con @if.                           -->
+<!-- ============================================================ -->
+
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+
+  <!-- Backdrop -->
+  <div
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+    (click)="onBackdropClick()"
+  ></div>
+
+  <!-- Panel -->
+  <div
+    class="relative z-10 flex flex-col w-full max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200/50"
+    [class]="maxWidth"
+  >
+    <!-- Header -->
+    <div class="flex-none flex items-center justify-between border-b border-gray-100 px-6 py-4">
+      <h2 class="text-lg font-semibold text-gray-900">{{ title }}</h2>
+      <button
+        type="button"
+        (click)="onClose()"
+        class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+      >
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body (contenido proyectado con scroll) -->
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+      <ng-content></ng-content>
+    </div>
+
+    <!-- Footer (contenido proyectado opcional) -->
+    <div class="flex-none">
+      <ng-content select="[modalFooter]"></ng-content>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1 @@
+// Supabase auth interceptor placeholder

@@ -1,0 +1,142 @@
+<!-- ============================================================ -->
+<!-- PlansPageComponent Template                                  -->
+<!-- Layout administrativo: Header + DataTable + Modal Form       -->
+<!-- ============================================================ -->
+
+<main class="min-h-screen bg-transparent px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <div class="space-y-6">
+
+      <!-- ─── Page Header ──────────────────────────────────────── -->
+      <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-white">Planes de Membresía</h1>
+          <p class="mt-1 text-sm text-slate-400">Gestiona los planes disponibles para tus clientes</p>
+        </div>
+        <button type="button" (click)="openNew()"
+          class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/30 active:scale-[0.98]">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nuevo Plan
+        </button>
+      </div>
+
+      <!-- ─── Error Alert ──────────────────────────────────────── -->
+      <div *ngIf="error()" class="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+        <svg class="h-5 w-5 shrink-0 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <p class="text-sm text-red-300">{{ error() }}</p>
+      </div>
+
+      <!-- ─── Data Table ───────────────────────────────────────── -->
+      <app-data-table [columns]="columns" [data]="plans()" [loading]="loading()"
+        emptyMessage="No hay planes registrados. ¡Crea el primero!" (rowAction)="handleRowAction($event)" />
+    </div>
+  </div>
+</main>
+
+<!-- ─── Modal: Formulario Crear / Editar ─────────────────────── -->
+<app-modal *ngIf="showFormModal()" [title]="modalTitle()" (closed)="closeFormModal()">
+
+  <form [formGroup]="planForm" (ngSubmit)="savePlan()" class="space-y-5">
+
+    <!-- Campo: Nombre -->
+    <div>
+      <label for="plan-name" class="mb-1.5 block text-sm font-medium text-gray-700">
+        Nombre del plan
+      </label>
+      <input id="plan-name" type="text" formControlName="name" placeholder="Ej: Mensual, Trimestral..."
+        class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2"
+        [ngClass]="{
+            'border-red-400 text-red-900 focus:border-red-500 focus:ring-red-500/20': hasError('name'),
+            'border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-emerald-500/20': !hasError('name')
+          }" />
+      <p *ngIf="hasError('name')" class="mt-1.5 text-xs text-red-500">El nombre es obligatorio (mín. 2 caracteres)</p>
+    </div>
+
+    <!-- Campo: Duración -->
+    <div>
+      <label for="plan-duration" class="mb-1.5 block text-sm font-medium text-gray-700">
+        Duración (días)
+      </label>
+      <input id="plan-duration" type="number" formControlName="durationDays" placeholder="30" min="1"
+        class="w-full rounded-xl border px-4 py-2.5 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2"
+        [ngClass]="{
+            'border-red-400 text-red-900 focus:border-red-500 focus:ring-red-500/20': hasError('durationDays'),
+            'border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-emerald-500/20': !hasError('durationDays')
+          }" />
+      <p *ngIf="hasError('durationDays')" class="mt-1.5 text-xs text-red-500">La duración debe ser al menos 1 día</p>
+    </div>
+
+    <!-- Campo: Precio -->
+    <div>
+      <label for="plan-price" class="mb-1.5 block text-sm font-medium text-gray-700">
+        Precio (S/)
+      </label>
+      <div class="relative">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">S/</span>
+        <input id="plan-price" type="number" formControlName="price" placeholder="0.00" min="0" step="0.01"
+          class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm transition-colors placeholder:text-gray-400 focus:outline-none focus:ring-2"
+          [ngClass]="{
+              'border-red-400 text-red-900 focus:border-red-500 focus:ring-red-500/20': hasError('price'),
+              'border-gray-300 text-gray-900 focus:border-emerald-500 focus:ring-emerald-500/20': !hasError('price')
+            }" />
+      </div>
+      <p *ngIf="hasError('price')" class="mt-1.5 text-xs text-red-500">El precio no puede ser negativo</p>
+    </div>
+
+  </form>
+
+  <!-- Footer del Modal -->
+  <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <button type="button" (click)="closeFormModal()"
+      class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
+      Cancelar
+    </button>
+    <button type="button" (click)="savePlan()" [disabled]="loading()"
+      class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50">
+      <svg *ngIf="loading()" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      {{ editingPlan() ? 'Guardar cambios' : 'Crear plan' }}
+    </button>
+  </div>
+
+</app-modal>
+
+<!-- ─── Modal: Confirmación de Eliminación ────────────────────── -->
+<app-modal *ngIf="showDeleteModal()" title="Eliminar plan" (closed)="closeDeleteModal()">
+
+  <div class="text-center sm:text-left">
+    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 sm:mx-0">
+      <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+        stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+    </div>
+    <p class="text-sm text-gray-600">
+      ¿Estás seguro de que deseas eliminar el plan
+      <strong class="text-gray-900">{{ deletingPlan()?.name }}</strong>?
+      Esta acción no se puede deshacer.
+    </p>
+  </div>
+
+  <div modalFooter class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+    <button type="button" (click)="closeDeleteModal()"
+      class="rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100">
+      Cancelar
+    </button>
+    <button type="button" (click)="confirmDelete()" [disabled]="loading()"
+      class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50">
+      Sí, eliminar
+    </button>
+  </div>
+</app-modal>
