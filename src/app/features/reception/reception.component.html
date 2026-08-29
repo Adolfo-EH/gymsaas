@@ -552,6 +552,8 @@
       <div>
         <label class="mb-1.5 block text-sm font-medium text-gray-700">Monto Cobrado (S/)</label>
         <input type="number" formControlName="amountPaid"
+          [readonly]="membershipForm.get('isCustomPrice')?.value"
+          [ngClass]="{'bg-gray-100 text-gray-500 cursor-not-allowed': membershipForm.get('isCustomPrice')?.value}"
           class="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-bold text-gray-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
       </div>
       }

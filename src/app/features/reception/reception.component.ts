@@ -205,10 +205,13 @@ export class ReceptionPageComponent implements OnInit, OnDestroy {
     this.membershipForm.get('isCustomPrice')?.valueChanges.subscribe(isCustom => {
       if (isCustom) {
         const plan = this.plans().find(p => p.id === this.membershipForm.value.planId);
-        this.membershipForm.patchValue({ customPrice: plan ? plan.price : 0 });
+        const price = plan ? plan.price : 0;
+        this.membershipForm.patchValue({ 
+          customPrice: price,
+          amountPaid: price
+        });
       } else {
         this.membershipForm.get('amountPaid')?.updateValueAndValidity({ emitEvent: true });
-        // Trigger manual balance update
         const max = this.plans().find(p => p.id === this.membershipForm.value.planId)?.price || 0;
         const currentPaid = this.membershipForm.value.amountPaid || 0;
         this.membershipForm.patchValue({ amountPaid: Math.min(currentPaid, max) });
@@ -219,8 +222,7 @@ export class ReceptionPageComponent implements OnInit, OnDestroy {
       if (this.membershipForm.value.isCustomPrice) {
         this.membershipForm.get('amountPaid')?.updateValueAndValidity({ emitEvent: true });
         const max = this.membershipForm.value.customPrice || 0;
-        const currentPaid = this.membershipForm.value.amountPaid || 0;
-        this.membershipForm.patchValue({ amountPaid: Math.min(currentPaid, max) });
+        this.membershipForm.patchValue({ amountPaid: max });
       }
     });
 
@@ -583,6 +585,11 @@ export class ReceptionPageComponent implements OnInit, OnDestroy {
     if (!plan) return false;
     const targetPrice = formVal.isCustomPrice ? (formVal.customPrice || 0) : plan.price;
     const total = (formVal.amountPaidCash || 0) + (formVal.amountPaidDigital || 0);
+    
+    // Si es oferta, el pago dividido debe sumar exactamente el precio de oferta
+    if (formVal.isCustomPrice) {
+      return total === targetPrice;
+    }
     return total <= targetPrice;
   }
 
